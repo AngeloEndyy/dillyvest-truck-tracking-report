@@ -1,0 +1,451 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dillyvest Tracking</title>
+  <style>
+    :root{
+      --red:#c62828;
+      --light-red:#ff7f7f;
+      --navy:#0b1f3a;
+      --navy2:#12284a;
+      --text:#eaf1ff;
+      --muted:#a9b9d6;
+      --border:rgba(255,255,255,.12);
+      --green:#2ecc71;
+      --amber:#f39c12;
+      --blue:#3498db;
+      --danger:#e74c3c;
+      --bgInput:#0f2544;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:Arial,Helvetica,sans-serif;
+      background:var(--navy);
+      color:var(--text);
+    }
+    .topbar{
+      background:var(--light-red);
+      color:#fff;
+      padding:18px 24px;
+      font-size:24px;
+      font-weight:700;
+      text-align:center;
+    }
+    .wrap{
+      max-width:1300px;
+      margin:0 auto;
+      padding:24px;
+    }
+    .card{
+      background:var(--navy2);
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:20px;
+      box-shadow:0 10px 30px rgba(0,0,0,.25);
+    }
+    .login-box{
+      max-width:420px;
+      margin:60px auto;
+    }
+    .field,
+    .filters input,
+    .filters select,
+    .modal input,
+    .modal select{
+      width:100%;
+      padding:12px 14px;
+      margin:10px 0;
+      border-radius:10px;
+      border:1px solid var(--border);
+      background:var(--bgInput);
+      color:#fff;
+      outline:none;
+    }
+    .btn{
+      border:none;
+      background:var(--red);
+      color:#fff;
+      padding:12px 16px;
+      border-radius:10px;
+      font-weight:700;
+      cursor:pointer;
+    }
+    .btn.secondary{background:#203b63}
+    .btn.danger{background:var(--danger)}
+    .btn.green{background:var(--green)}
+    .hidden{display:none}
+    .title-row{
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      align-items:end;
+      justify-content:space-between;
+      margin-bottom:16px;
+    }
+    .filters{
+      display:grid;
+      grid-template-columns:repeat(5, minmax(140px, 1fr));
+      gap:10px;
+      margin-bottom:16px;
+    }
+    table{
+      width:100%;
+      border-collapse:collapse;
+      overflow:hidden;
+      border-radius:12px;
+      background:var(--bgInput);
+    }
+    th,td{
+      padding:12px 10px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+      text-align:left;
+      vertical-align:middle;
+      font-size:14px;
+    }
+    th{
+      background:#152f55;
+      color:#fff;
+      position:sticky;
+      top:0;
+    }
+    tr:hover{background:rgba(255,255,255,.03)}
+    .status{
+      padding:8px 10px;
+      border-radius:999px;
+      border:none;
+      color:#fff;
+      font-weight:700;
+      cursor:pointer;
+      min-width:120px;
+    }
+    .s-moving{background:var(--green)}
+    .s-offloading{background:var(--amber)}
+    .s-offloaded{background:var(--blue)}
+    .s-breakdown{background:#e74c3c}
+    .s-stops{background:#7f8c8d}
+    .actions{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+    .small{
+      color:var(--muted);
+      font-size:13px;
+      margin-top:8px;
+    }
+    .error{
+      color:#ff5a5a;
+      margin-top:8px;
+      display:none;
+      font-weight:700;
+    }
+    .modal{
+      display:none;
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,.6);
+      align-items:center;
+      justify-content:center;
+      padding:20px;
+    }
+    .modal.show{display:flex}
+    .modal .panel{
+      width:100%;
+      max-width:620px;
+      background:var(--navy2);
+      border:1px solid var(--border);
+      border-radius:16px;
+      padding:20px;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(2,1fr);
+      gap:10px;
+    }
+    .modal-actions{
+      display:flex;
+      gap:10px;
+      justify-content:flex-end;
+      margin-top:12px;
+    }
+    @media (max-width:1000px){
+      .filters,.grid{
+        grid-template-columns:repeat(2, minmax(140px, 1fr));
+      }
+      table{
+        display:block;
+        overflow:auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">Dillyvest Tracking System</div>
+
+  <div class="wrap">
+    <section id="loginView" class="card login-box">
+      <h2>Login</h2>
+      <input class="field" type="text" id="username" placeholder="Username">
+      <input class="field" type="password" id="password" placeholder="Password">
+      <div id="loginError" class="error">Invalid username or password.</div>
+      <button class="btn" onclick="login()">Login</button>
+    </section>
+
+    <section id="dashboardView" class="hidden">
+      <div class="card">
+        <div class="title-row">
+          <div>
+            <h2>Main Tracking Dashboard</h2>
+            <div class="small">Track haulage trips by truck, container, route, and status.</div>
+          </div>
+          <div class="actions">
+            <button class="btn green" onclick="openAddModal()">+ Add Trip</button>
+            <button class="btn secondary" onclick="logout()">Logout</button>
+          </div>
+        </div>
+
+        <div class="filters">
+          <input type="text" id="searchBox" placeholder="Search truck, container, destination...">
+          <select id="statusFilter">
+            <option value="">All Statuses</option>
+            <option value="Breakdown">Breakdown</option>
+            <option value="Stops">Stops</option>
+            <option value="Offloading">Offloading</option>
+            <option value="Offloaded">Offloaded</option>
+            <option value="Moving">Moving</option>
+          </select>
+          <input type="text" id="originFilter" placeholder="Filter by origin">
+          <input type="text" id="destinationFilter" placeholder="Filter by destination">
+          <button class="btn" onclick="applyFilters()">Search / Filter</button>
+        </div>
+
+        <div style="overflow:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>Truck Number</th>
+                <th>Container Number</th>
+                <th>Destination</th>
+                <th>Location</th>
+                <th>Origin</th>
+                <th>Time of Trip</th>
+                <th>Stop of Trip</th>
+                <th>Duration</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="tripBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div id="tripModal" class="modal">
+    <div class="panel">
+      <h2>Add Trip</h2>
+      <div class="grid">
+        <input id="newTruck" placeholder="Truck Number">
+        <input id="newContainer" placeholder="Container Number">
+        <input id="newDestination" placeholder="Destination">
+        <input id="newLocation" placeholder="Location">
+        <input id="newOrigin" placeholder="Origin">
+        <input id="newTime" placeholder="Time of Trip">
+        <input id="newStop" placeholder="Stop of Trip">
+        <input id="newDuration" placeholder="Duration">
+        <select id="newStatus" style="grid-column:1 / -1;">
+          <option value="Moving">Moving</option>
+          <option value="Offloading">Offloading</option>
+          <option value="Offloaded">Offloaded</option>
+          <option value="Breakdown">Breakdown</option>
+          <option value="Stops">Stops</option>
+        </select>
+      </div>
+      <div class="modal-actions">
+        <button class="btn secondary" onclick="closeAddModal()">Cancel</button>
+        <button class="btn green" onclick="addTrip()">Save Trip</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let trips = [
+         ];
+
+    let filteredIndices = [];
+
+    function login(){
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value.trim();
+      const errorBox = document.getElementById("loginError");
+
+      if (username === "admin" && password === "dillyvest123") {
+        errorBox.style.display = "none";
+        document.getElementById("loginView").classList.add("hidden");
+        document.getElementById("dashboardView").classList.remove("hidden");
+        applyFilters();
+      } else {
+        errorBox.style.display = "block";
+      }
+    }
+
+    document.getElementById("username").addEventListener("input", () => {
+      document.getElementById("loginError").style.display = "none";
+    });
+    document.getElementById("password").addEventListener("input", () => {
+      document.getElementById("loginError").style.display = "none";
+    });
+
+    function logout(){
+      document.getElementById("dashboardView").classList.add("hidden");
+      document.getElementById("loginView").classList.remove("hidden");
+    }
+
+    function statusClass(status){
+      return {
+        "Moving":"s-moving",
+        "Offloading":"s-offloading",
+        "Offloaded":"s-offloaded",
+        "Breakdown":"s-breakdown",
+        "Stops":"s-stops"
+      }[status] || "s-moving";
+    }
+
+    function renderTrips(data){
+      const body = document.getElementById("tripBody");
+      body.innerHTML = data.map((t, i) => `
+        <tr>
+          <td>${t[0]}</td>
+          <td>${t[1]}</td>
+          <td>${t[2]}</td>
+          <td>${t[3]}</td>
+          <td>${t[4]}</td>
+          <td>${t[5]}</td>
+          <td>${t[6]}</td>
+          <td>${t[7]}</td>
+          <td>
+            <select class="status ${statusClass(t[8])}" onchange="updateStatus(${filteredIndices[i]}, this.value)">
+              <option ${t[8]==="Breakdown"?"selected":""}>Breakdown</option>
+              <option ${t[8]==="Stops"?"selected":""}>Stops</option>
+              <option ${t[8]==="Offloading"?"selected":""}>Offloading</option>
+              <option ${t[8]==="Offloaded"?"selected":""}>Offloaded</option>
+              <option ${t[8]==="Moving"?"selected":""}>Moving</option>
+            </select>
+          </td>
+          <td>
+            <div class="actions">
+              <button class="btn secondary" onclick="editTrip(${filteredIndices[i]})">Edit</button>
+              <button class="btn danger" onclick="deleteTrip(${filteredIndices[i]})">Delete</button>
+            </div>
+          </td>
+        </tr>
+      `).join("");
+    }
+
+    function applyFilters(){
+      const q = document.getElementById("searchBox").value.toLowerCase();
+      const status = document.getElementById("statusFilter").value.toLowerCase();
+      const origin = document.getElementById("originFilter").value.toLowerCase();
+      const destination = document.getElementById("destinationFilter").value.toLowerCase();
+
+      const filtered = [];
+      filteredIndices = [];
+
+      trips.forEach((t, idx) => {
+        const rowText = t.join(" ").toLowerCase();
+        const ok =
+          (!q || rowText.includes(q)) &&
+          (!status || t[8].toLowerCase() === status) &&
+          (!origin || t[4].toLowerCase().includes(origin)) &&
+          (!destination || t[2].toLowerCase().includes(destination));
+
+        if (ok) {
+          filtered.push(t);
+          filteredIndices.push(idx);
+        }
+      });
+
+      renderTrips(filtered);
+    }
+
+    function updateStatus(index, value){
+      trips[index][8] = value;
+      applyFilters();
+    }
+
+    function editTrip(index){
+      const t = trips[index];
+      const fields = [
+        "Truck Number","Container Number","Destination","Location",
+        "Origin","Time of Trip","Stop of Trip","Duration"
+      ];
+
+      for (let i = 0; i < 8; i++) {
+        const val = prompt(`Edit ${fields[i]}:`, t[i]);
+        if (val === null) return;
+        t[i] = val.trim();
+      }
+
+      const status = prompt(
+        "Edit Status (Breakdown / Stops / Offloading / Offloaded / Moving):",
+        t[8]
+      );
+      if (status === null) return;
+      t[8] = status.trim();
+
+      applyFilters();
+    }
+
+    function deleteTrip(index){
+      if (confirm("Delete this trip?")) {
+        trips.splice(index, 1);
+        applyFilters();
+      }
+    }
+
+    function openAddModal(){
+      document.getElementById("tripModal").classList.add("show");
+    }
+
+    function closeAddModal(){
+      document.getElementById("tripModal").classList.remove("show");
+      ["newTruck","newContainer","newDestination","newLocation","newOrigin","newTime","newStop","newDuration"].forEach(
+        id => document.getElementById(id).value = ""
+      );
+      document.getElementById("newStatus").value = "Moving";
+    }
+
+    function addTrip(){
+      const trip = [
+        document.getElementById("newTruck").value.trim(),
+        document.getElementById("newContainer").value.trim(),
+        document.getElementById("newDestination").value.trim(),
+        document.getElementById("newLocation").value.trim(),
+        document.getElementById("newOrigin").value.trim(),
+        document.getElementById("newTime").value.trim(),
+        document.getElementById("newStop").value.trim(),
+        document.getElementById("newDuration").value.trim(),
+        document.getElementById("newStatus").value
+      ];
+
+      if (trip.some(v => v === "")) {
+        alert("Please fill in all fields.");
+        return;
+      }
+
+      trips.push(trip);
+      closeAddModal();
+      applyFilters();
+    }
+
+    document.getElementById("searchBox").addEventListener("input", applyFilters);
+    document.getElementById("statusFilter").addEventListener("change", applyFilters);
+    document.getElementById("originFilter").addEventListener("input", applyFilters);
+    document.getElementById("destinationFilter").addEventListener("input", applyFilters);
+  </script>
+</body>
+</html>
